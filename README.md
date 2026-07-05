@@ -9,6 +9,8 @@ Personal health & finances dashboard: workouts, calories, and weight tracking, p
 
 ## Setup
 
+**Using Claude Code?** Just run `claude` in the repo and say "set up the dashboard for me" — the bundled `/setup` skill walks through everything below, including Plaid keys and personalizing the settings DB.
+
 1. **Configure the backend** — copy `backend/.env.example` to `backend/.env` and fill in your values:
    - `HEALTH_JWT_SECRET`: any long random string (`openssl rand -hex 32`)
    - `PLAID_CLIENT_ID` / `PLAID_SECRET`: your own keys from the [Plaid dashboard](https://dashboard.plaid.com/developers/keys) (free sandbox tier works)
