@@ -9,7 +9,29 @@ Personal health & finances dashboard: workouts, calories, and weight tracking, p
 
 ## Setup
 
-**Using Claude Code?** Just run `claude` in the repo and say "set up the dashboard for me" — the bundled `/setup` skill walks through everything below, including Plaid keys and personalizing the settings DB.
+### AI-assisted setup (recommended)
+
+The repo ships with agent instructions, so an AI coding assistant can do the whole setup for you — env files, Plaid keys, account creation, and personalizing the settings:
+
+**With Claude Code** ([install](https://claude.com/claude-code)):
+
+```bash
+git clone https://github.com/Icycoal/my-dashboard.git
+cd my-dashboard && claude
+```
+
+Then say: *"set up the dashboard for me"* (the bundled `/setup` skill kicks in).
+
+**With Google Antigravity** ([download](https://antigravity.google)):
+
+1. Download and install Antigravity, then clone this repo:
+   `git clone https://github.com/Icycoal/my-dashboard.git`
+2. Open the `my-dashboard` folder in Antigravity (**File → Open Folder**).
+3. Ask the agent: *"set up the dashboard for me following the setup guide"* — it picks up the instructions in `AGENTS.md`, which point to the full guide in `.claude/skills/setup/SKILL.md`.
+
+Either way, the agent will ask you for your personal values (birthday, pay details, Plaid keys) as it goes.
+
+### Manual setup
 
 1. **Configure the backend** — copy `backend/.env.example` to `backend/.env` and fill in your values:
    - `HEALTH_JWT_SECRET`: any long random string (`openssl rand -hex 32`)
