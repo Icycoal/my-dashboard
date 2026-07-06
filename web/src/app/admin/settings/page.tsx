@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authHeaders } from "@/lib/api";
 import { card, input, btnPrimary, btnGhost, pageTitle } from "@/lib/ui";
 
 interface SettingRow {
@@ -75,7 +76,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/settings/rows")
+    fetch("/api/admin/settings/rows", { headers: authHeaders() })
       .then(r => r.json())
       .then((data: SettingRow[]) => { setRows(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -85,7 +86,7 @@ export default function AdminSettingsPage() {
     const parsed = JSON.parse(raw);
     await fetch("/api/admin/settings", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ key, value: parsed }),
     });
     setRows(prev => prev.map(r => r.key === key ? { ...r, value: raw } : r));

@@ -33,6 +33,7 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(CreateSMSMessage())
     app.migrations.add(CreateFinanceState())
     app.migrations.add(CreatePlaidItem())
+    app.migrations.add(CreateFinanceTransaction())
 
     try await app.autoMigrate()
 

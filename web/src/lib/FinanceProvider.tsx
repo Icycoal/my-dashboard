@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from "react";
-import type { FinanceState, FinanceAction, AppSettings } from "@/lib/finances-types";
-import { healthRequest, getToken } from "@/lib/api";
+import type { FinanceState, FinanceAction, AppSettings, Transaction } from "@/lib/finances-types";
+import { healthRequest, getToken, authHeaders } from "@/lib/api";
 import { initClientSettings, financeSettings } from "@/lib/clientSettings";
 
 function todayISO() {
@@ -239,10 +239,45 @@ function financeReducer(state: FinanceState, action: FinanceAction): FinanceStat
 }
 
 async function saveToBackend(state: FinanceState) {
+  // Transactions live in their own DB rows and are synced separately —
+  // strip them so the blob stays small and the key stays absent.
+  const { transactions: _transactions, ...rest } = state;
   try {
-    await healthRequest("finances/data", { method: "POST", body: JSON.stringify(state) });
+    await healthRequest("finances/data", { method: "POST", body: JSON.stringify(rest) });
   } catch {
     // server unreachable or unauthorized — ignore, auth guard handles redirect
+  }
+}
+
+function txnMap(txns: Transaction[]): Map<string, string> {
+  return new Map(txns.map((t) => [t.id, JSON.stringify(t)]));
+}
+
+/** Send only what changed since the last successful sync. */
+async function syncTransactions(
+  transactions: Transaction[],
+  lastSynced: React.MutableRefObject<Map<string, string> | null>,
+) {
+  const last = lastSynced.current;
+  if (!last) return; // initial load failed — never derive deletes from an empty baseline
+  const current = txnMap(transactions);
+  const upserts: Transaction[] = [];
+  for (const [id, json] of current) {
+    if (last.get(id) !== json) upserts.push(JSON.parse(json));
+  }
+  const deletes: string[] = [];
+  for (const id of last.keys()) {
+    if (!current.has(id)) deletes.push(id);
+  }
+  if (upserts.length === 0 && deletes.length === 0) return;
+  try {
+    await healthRequest("finances/transactions/sync", {
+      method: "POST",
+      body: JSON.stringify({ upserts, deletes }),
+    });
+    lastSynced.current = current;
+  } catch {
+    // keep the old baseline so the delta is retried on the next change
   }
 }
 
@@ -254,9 +289,10 @@ const FinanceContext = createContext<{
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(financeReducer, defaultState);
   const loaded = useRef(false);
+  const lastSyncedTxns = useRef<Map<string, string> | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/settings")
+    fetch("/api/admin/settings", { headers: authHeaders() })
       .then((r) => r.ok ? r.json() : null)
       .then((data: AppSettings | null) => { if (data) initClientSettings(data); })
       .catch(() => {});
@@ -272,6 +308,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         if (data && Object.keys(data).length > 0) {
           dispatch({ type: "LOAD_STATE", state: data as FinanceState });
         }
+        lastSyncedTxns.current = txnMap(data?.transactions ?? []);
         loaded.current = true;
       })
       .catch(() => {
@@ -282,6 +319,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loaded.current) return;
     saveToBackend(state);
+    syncTransactions(state.transactions, lastSyncedTxns);
   }, [state]);
 
   return <FinanceContext.Provider value={{ state, dispatch }}>{children}</FinanceContext.Provider>;

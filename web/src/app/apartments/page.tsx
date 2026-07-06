@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import AuthGuard from "@/components/AuthGuard";
+import { authHeaders } from "@/lib/api";
 import type { Complex } from "@/lib/apartments/types";
 import { btnPrimary, cardPad, input, pageSubtitle, pageTitle } from "@/lib/ui";
 
@@ -50,7 +51,7 @@ function Inner() {
   const [busyId, setBusyId] = useState<number | null>(null);
 
   async function load() {
-    const res = await fetch("/api/apartments");
+    const res = await fetch("/api/apartments", { headers: authHeaders() });
     const data = await res.json();
     setComplexes(data.complexes ?? []);
   }
@@ -66,7 +67,7 @@ function Inner() {
     try {
       const res = await fetch("/api/apartments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           name: form.name,
           address: form.address,
@@ -90,7 +91,7 @@ function Inner() {
   async function rescrape(id: number) {
     setBusyId(id);
     try {
-      await fetch(`/api/apartments/${id}`, { method: "POST" });
+      await fetch(`/api/apartments/${id}`, { method: "POST", headers: authHeaders() });
       await load();
     } finally {
       setBusyId(null);
@@ -101,7 +102,7 @@ function Inner() {
     if (!confirm("Remove this complex?")) return;
     setBusyId(id);
     try {
-      await fetch(`/api/apartments/${id}`, { method: "DELETE" });
+      await fetch(`/api/apartments/${id}`, { method: "DELETE", headers: authHeaders() });
       if (expanded === id) setExpanded(null);
       await load();
     } finally {

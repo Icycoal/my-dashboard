@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAllSettings, updateSetting } from "@/lib/settings";
+import { verifyAuth, unauthorized } from "@/lib/serverAuth";
 import type { AppSettings, TaxSettings, ContributionSettings, FinanceSettings, AlgorithmConfig } from "@/lib/finances-types";
 
 function buildAppSettings(): AppSettings {
@@ -62,7 +63,8 @@ function buildAppSettings(): AppSettings {
   return { finances, tax, contributions, algorithm };
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!verifyAuth(req)) return unauthorized();
   try {
     return NextResponse.json(buildAppSettings());
   } catch (e) {
@@ -71,6 +73,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  if (!verifyAuth(req)) return unauthorized();
   try {
     const { key, value } = await req.json() as { key: string; value: unknown };
     if (!key) return NextResponse.json({ error: "key required" }, { status: 400 });

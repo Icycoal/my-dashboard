@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyAuth, unauthorized } from "@/lib/serverAuth";
 import { listComplexes, insertComplex, updateComplexComputed } from "@/lib/apartments/db";
 import { scrapeComplex } from "@/lib/apartments/agent";
 import { computeTotals } from "@/lib/apartments/compute";
@@ -8,11 +9,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!verifyAuth(req)) return unauthorized();
   return NextResponse.json({ complexes: listComplexes() });
 }
 
 export async function POST(request: NextRequest) {
+  if (!verifyAuth(request)) return unauthorized();
   let body: unknown;
   try {
     body = await request.json();

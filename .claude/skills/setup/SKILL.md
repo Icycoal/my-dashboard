@@ -70,7 +70,7 @@ Data lives in `backend/db.sqlite` (finance/health state) and `web/data/dashboard
 
 ## 6. Personalize the settings DB
 
-All settings are edited in the UI at **http://localhost:3000/admin/settings** (grouped by category), or in bulk via `PUT /api/admin/settings/rows`. Defaults are seeded on first run with neutral values — the ones below **must** be personalized for projections to be correct:
+All settings are edited in the UI at **http://localhost:3000/admin/settings** (grouped by category), or via `PUT /api/admin/settings` with `{key, value}`. The settings API requires a login token: `Authorization: Bearer <token>` from `POST localhost:8080/api/v1/auth/login`. Defaults are seeded on first run with neutral values — the ones below **must** be personalized for projections to be correct:
 
 | Key | Set it to |
 |---|---|
